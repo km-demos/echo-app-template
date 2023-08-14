@@ -1,2 +1,2 @@
-# echo-app-template
-Simple http echo app template for demos.
+# echo-app
+Simple echo app and helm chart.
