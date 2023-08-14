@@ -18,6 +18,8 @@ deployment:
   annotations:
     app.komodor.com/app: https://github.com/km-demos/echo-app
     link.argocd.argoproj.io/external-link: https://app.komodor.com/main/deep-dive/kurt-madel.demo-cluster-echo-app.echo-app
+  args:
+    text: Finally working
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
