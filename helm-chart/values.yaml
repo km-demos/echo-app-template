@@ -9,7 +9,7 @@ image:
   # use Chart appVersion if not set as value
   tag: ""
 imagePullSecrets:
-  - name: ghrc-login-secret
+  - name: ghcr-login-secret
 nameOverride: ""
 fullnameOverride: ""
 deployment:
