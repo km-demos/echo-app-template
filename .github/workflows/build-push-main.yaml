@@ -44,6 +44,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.KM_DEMOS_PAT }}
       - name: Install PyBump
         run: |
           python3 -m pip install pybump
@@ -96,6 +98,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.KM_DEMOS_PAT }}
       - name: Install PyBump
         run: |
           python3 -m pip install pybump
