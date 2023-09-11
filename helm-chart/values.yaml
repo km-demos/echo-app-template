@@ -15,9 +15,6 @@ fullnameOverride: ""
 deployment:
   # used to specify commit sha in CI job
   commit: b2259170909d1f4ae5e655c5ed22c233e28f512a
-  annotations:
-    app.komodor.com/app: https://github.com/km-demos/echo-app
-    link.argocd.argoproj.io/external-link: https://app.komodor.com/main/deep-dive/kurt-madel.demo-cluster-echo-app.echo-app
 serviceAccount:
   # Specifies whether a service account should be created
   create: true

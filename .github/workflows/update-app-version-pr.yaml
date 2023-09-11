@@ -3,8 +3,7 @@ name: update-app-version-pr
 # on merge to main from pull request (recommended)
 on:
   pull_request:
-    types:
-      - opened
+    types: [opened, reopened]
     branches:
       - main
     paths:
@@ -15,9 +14,14 @@ env:
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
+  CLUSTER_NAME: 'k8s-demo-cluster'
+  GCP_REGION: 'us-east5'
+  GCP_ZONE: 'us-east5-b'
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT }}
+  REPO_NAME: ${{ github.event.repository.name }}
 
 jobs:
-  build-app-version:
+  build-push-app:
     runs-on: ubuntu-22.04
     permissions:
       packages: write
@@ -51,6 +55,8 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
+      - name: Echo Tag
+        run: echo $DOCKER_METADATA_OUTPUT_VERSION
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
@@ -67,3 +73,45 @@ jobs:
           package-type: 'container'
           min-versions-to-keep: 3
           delete-only-pre-release-versions: "true"
+
+      - name: Install Loft CLI
+        uses: loft-sh/setup-loft@v2
+        with:
+          version: v3.2.4
+          url: ${{ secrets.LOFT_URL }}
+          # Specify your Loft access key here
+          access-key: ${{ secrets.LOFT_PREVIEW_ACCESS_KEY }}
+
+      - name: Create Preview vcluster
+        run: |
+          loft create vcluster $REPO_NAME-pr-${{ github.event.pull_request.number }} --project preview --recreate
+          kubectl create ns preview-$REPO_NAME
+          kubectl create secret docker-registry ghcr-login-secret -n $REPO_NAME --docker-server=https://ghcr.io \
+            --docker-username=km-demos --docker-password=${{ secrets.KM_MANAGE_PACKAGES_TOKEN }} --docker-email=km@kurtmadel.com
+
+      - id: 'gcp-auth'
+        name: 'Authenticate to Google Cloud'
+        uses: google-github-actions/auth@v1.1.1
+        with:
+          workload_identity_provider: ${{ secrets.WIF_POOL }}
+          service_account: ${{ secrets.WIF_SA_EMAIL }}
+
+      - id: get-credentials
+        uses: google-github-actions/get-gke-credentials@v1.0.2
+        with:
+          cluster_name: ${{ env.CLUSTER_NAME }}
+          location: ${{ env.GCP_ZONE }}
+
+      - id: create-argocd-app
+        run: |
+          VCLUSTER_URL=${{ secrets.LOFT_URL }}/kubernetes/project/preview/virtualcluster/$REPO_NAME-pr-${{ github.event.pull_request.number }}
+          PREVIEW_APP_HOST=$REPO_NAME-pr-${{ github.event.pull_request.number }}.previews.k8s.kurtmadel.com
+          yq e -i ".metadata.name = \"$REPO_NAME-preview\"" argocd/preview-app.yaml
+          yq e -i ".spec.source.repoURL = \"https://github.com/km-demos/$REPO_NAME.git\"" argocd/preview-app.yaml
+          yq e -i ".spec.source.targetRevision = \"${{ github.sha }}\"" argocd/preview-app.yaml
+          yq e -i ".spec.source.helm.valuesObject.image.tag = \"$DOCKER_METADATA_OUTPUT_VERSION\"" argocd/preview-app.yaml
+          yq e -i ".spec.destination.namespace = \"preview-$REPO_NAME\"" argocd/preview-app.yaml
+          yq e -i ".spec.destination.server = \"$VCLUSTER_URL\"" argocd/preview-app.yaml
+          sed -i "s/PREVIEW_APP_HOST/$PREVIEW_APP_HOST/g" argocd/preview-app.yaml
+          kubectl apply -f argocd/preview-app.yaml
+          
