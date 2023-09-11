@@ -3,8 +3,6 @@ name: update-app-version-pr
 # on merge to main from pull request (recommended)
 on:
   pull_request:
-    types:
-      - opened
     branches:
       - main
     paths:
