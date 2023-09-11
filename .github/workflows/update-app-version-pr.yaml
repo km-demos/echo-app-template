@@ -51,6 +51,8 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
+      - name: Echo Tag
+        run: echo $DOCKER_METADATA_OUTPUT_VERSION
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
