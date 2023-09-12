@@ -1,0 +1,8 @@
+  image:
+    tag: IMAGE_TAG
+  ingress:
+    hosts:
+      - host: PREVIEW_APP_HOST
+    tls:
+      - hosts:
+          - PREVIEW_APP_HOST
