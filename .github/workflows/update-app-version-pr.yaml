@@ -58,6 +58,8 @@ jobs:
           registry: ghcr.io
       - name: Echo Tag
         run: echo $DOCKER_METADATA_OUTPUT_VERSION
+      - name: Add SHORT_SHA env property with commit short sha
+        run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
@@ -65,15 +67,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache,mode=max
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-      - name: Delete Old Images
-        uses: actions/delete-package-versions@v4
-        with: 
-          package-name: ${{ github.event.repository.name }}
-          package-type: 'container'
-          min-versions-to-keep: 10
-          delete-only-pre-release-versions: "true"
+          tags: ${{ github.repository }}:${SHORT_SHA}
 
       - name: Install Loft CLI
         uses: loft-sh/setup-loft@v2
@@ -110,7 +104,7 @@ jobs:
           yq e -i ".metadata.name = \"$REPO_NAME-preview\"" argocd/preview-app.yaml
           yq e -i ".spec.source.repoURL = \"https://github.com/km-demos/$REPO_NAME.git\"" argocd/preview-app.yaml
           yq e -i ".spec.source.targetRevision = \"${{ github.sha }}\"" argocd/preview-app.yaml
-          yq e -i ".spec.source.helm.valuesObject.image.tag = \"$DOCKER_METADATA_OUTPUT_VERSION\"" argocd/preview-app.yaml
+          yq e -i ".spec.source.helm.valuesObject.image.tag = \"${SHORT_SHA}\"" argocd/preview-app.yaml
           yq e -i ".spec.destination.namespace = \"preview-$REPO_NAME\"" argocd/preview-app.yaml
           yq e -i ".spec.destination.server = \"$VCLUSTER_URL\"" argocd/preview-app.yaml
           sed -i "s/PREVIEW_APP_HOST/$PREVIEW_APP_HOST/g" argocd/preview-app.yaml
