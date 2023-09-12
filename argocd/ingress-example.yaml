@@ -1,0 +1,61 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-6s0o7
+  namespace: preview-echo-app-template
+  uid: 26e08c94-d1b1-49cf-88b1-dfa046c378ad
+  resourceVersion: '497'
+  generation: 1
+  creationTimestamp: '2023-09-12T13:30:26Z'
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: 'true'
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/ssl-passthrough: 'false'
+  managedFields:
+    - manager: Mozilla
+      operation: Update
+      apiVersion: networking.k8s.io/v1
+      time: '2023-09-12T13:30:26Z'
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:cert-manager.io/cluster-issuer: {}
+            f:kubernetes.io/ingress.class: {}
+            f:kubernetes.io/tls-acme: {}
+            f:nginx.ingress.kubernetes.io/backend-protocol: {}
+            f:nginx.ingress.kubernetes.io/ssl-passthrough: {}
+        f:spec:
+          f:ingressClassName: {}
+          f:rules: {}
+          f:tls: {}
+    - manager: Go-http-client
+      operation: Update
+      apiVersion: networking.k8s.io/v1
+      time: '2023-09-12T13:31:05Z'
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:loadBalancer:
+            f:ingress: {}
+      subresource: status
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - echo-app-template-pr-25.previews.k8s.kurtmadel.com
+      secretName: preview-tls
+  rules:
+    - host: echo-app-template-pr-25.previews.k8s.kurtmadel.com
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: echo-app-template-pr-25
+                port:
+                  name: http

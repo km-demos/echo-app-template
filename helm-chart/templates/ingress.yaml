@@ -33,9 +33,9 @@ spec:
             service: 
               name: {{ $fullName }}
               port: 
-                number: {{ $svcPort }}
+                name: http
           path: /
-          pathType: Prefix
+          pathType: ImplementationSpecific
         {{- end }}
   {{- end }}
 {{- end }}

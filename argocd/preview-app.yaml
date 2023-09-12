@@ -17,8 +17,12 @@ spec:
         value: IMAGE_TAG
       - name: "ingress.hosts[0].host"
         value: PREVIEW_APP_HOST
+      - name: "ingress.hosts[0].paths[0].backend.service.name"
+        value: SERVICE_NAME
       - name: "ingress.tls[0].hosts[0]"
         value: PREVIEW_APP_HOST
+      - name: "ingress.tls[0].secretName"
+        value: preview-tls
   destination: 
     server: PREVIEW_VCLUSTER
     namespace: PREVIEW_NAMESPACE
