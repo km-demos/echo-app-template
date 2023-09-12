@@ -61,12 +61,13 @@ jobs:
         run: |
           VCLUSTER_URL=${{ secrets.LOFT_URL }}/kubernetes/project/preview/virtualcluster/$REPO_NAME-pr-${{ github.event.pull_request.number }}
           PREVIEW_APP_HOST=$REPO_NAME-pr-${{ github.event.pull_request.number }}.previews.k8s.kurtmadel.com
-          yq e -i ".metadata.name = \"$REPO_NAME-preview\"" argocd/preview-app.yaml
+          yq e -i ".metadata.name = \"$REPO_NAME-pr-${{ github.event.pull_request.number }}\"" argocd/preview-app.yaml
           yq e -i ".spec.source.repoURL = \"https://github.com/km-demos/$REPO_NAME.git\"" argocd/preview-app.yaml
           yq e -i ".spec.source.targetRevision = \"${{ github.sha }}\"" argocd/preview-app.yaml
-          yq e -i ".spec.source.helm.valuesObject.image.tag = \"$DOCKER_METADATA_OUTPUT_VERSION\"" argocd/preview-app.yaml
           yq e -i ".spec.destination.namespace = \"preview-$REPO_NAME\"" argocd/preview-app.yaml
           yq e -i ".spec.destination.server = \"$VCLUSTER_URL\"" argocd/preview-app.yaml
-          sed -i "s/PREVIEW_APP_HOST/$PREVIEW_APP_HOST/g" argocd/preview-app.yaml
+          yq e -i ".image.tag = \"${SHORT_SHA}\"" argocd/values-preview.yaml
+          sed -i "s/PREVIEW_APP_HOST/$PREVIEW_APP_HOST/g" argocd/values-preview.yaml
+          more argocd/preview-app.yaml
           kubectl delete -f argocd/preview-app.yaml
           
