@@ -119,5 +119,5 @@ jobs:
           number: ${{ github.event.pull_request.number }}
           header: release
           message: |
-            Preview environment deployed at: https://$REPO_NAME-pr-${{ github.event.pull_request.number }}.previews.k8s.kurtmadel.com
+            Preview environment deployed at: https://${{ env.REPO_NAME}}-pr-${{ github.event.pull_request.number }}.previews.k8s.kurtmadel.com
           
