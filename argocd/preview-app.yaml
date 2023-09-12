@@ -29,6 +29,14 @@ spec:
     server: PREVIEW_VCLUSTER
     namespace: PREVIEW_NAMESPACE
 
+  info:
+    - name: Preview App Link
+      value: >-
+        APP_LINK
+    - name: GitHub PR
+      value: >-
+        GITHUB_PR_LINK
+
   syncPolicy:
     syncOptions:
     - CreateNamespace=true
