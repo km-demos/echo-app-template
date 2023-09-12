@@ -14,7 +14,7 @@ nameOverride: ""
 fullnameOverride: ""
 deployment:
   # used to specify commit sha in CI job
-  commit: b2259170909d1f4ae5e655c5ed22c233e28f512a
+  commit: 6e40eabdd5ec25110ab0965cb6e749abd395f802
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
