@@ -8,8 +8,10 @@ image:
   pullPolicy: IfNotPresent
   # use Chart appVersion if not set as value
   tag: ""
+  args:
+    text: echo v1
 imagePullSecrets:
-  - name: ghrc-login-secret
+  - name: ghcr-login-secret
 nameOverride: ""
 fullnameOverride: ""
 deployment:
