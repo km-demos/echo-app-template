@@ -68,7 +68,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}::${{ env.SHORT_SHA }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.SHORT_SHA }}
 
       - name: Install Loft CLI
         uses: loft-sh/setup-loft@v2
