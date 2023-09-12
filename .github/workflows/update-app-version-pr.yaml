@@ -109,5 +109,6 @@ jobs:
           yq e -i ".spec.destination.namespace = \"preview-$REPO_NAME\"" argocd/preview-app.yaml
           yq e -i ".spec.destination.server = \"$VCLUSTER_URL\"" argocd/preview-app.yaml
           sed -i "s/PREVIEW_APP_HOST/$PREVIEW_APP_HOST/g" argocd/preview-app.yaml
+          more argocd/preview-app.yaml
           kubectl apply -f argocd/preview-app.yaml
           
