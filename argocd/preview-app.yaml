@@ -10,7 +10,7 @@ spec:
     targetRevision: COMMIT_SHA
     path: helm-chart
     helm:
-      valuesFile:
+      valueFiles:
       - values-preview.yaml
   destination: 
     server: PREVIEW_VCLUSTER
