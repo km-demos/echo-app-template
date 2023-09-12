@@ -113,4 +113,11 @@ jobs:
           sed -i "s/PREVIEW_APP_HOST/$PREVIEW_APP_HOST/g" argocd/preview-app.yaml
           more argocd/preview-app.yaml
           kubectl apply -f argocd/preview-app.yaml
+
+      - uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ github.event.pull_request.number }}
+          header: release
+          message: |
+            Preview environment deployed at: https://$REPO_NAME-pr-${{ github.event.pull_request.number }}.previews.k8s.kurtmadel.com
           
