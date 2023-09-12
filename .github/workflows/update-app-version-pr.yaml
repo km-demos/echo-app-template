@@ -83,7 +83,8 @@ jobs:
         run: |
           loft create vcluster $REPO_NAME-pr-${{ github.event.pull_request.number }} --project preview --recreate
           kubectl create ns preview-$REPO_NAME
-          kubectl apply -n preview-$REPO_NAME -f argocd/ghcr-login-secret.yaml
+          kubectl create secret docker-registry ghcr-login-secret -n preview-$REPO_NAME --docker-server=https://ghcr.io \
+            --docker-username=km-demos --docker-password=${{ secrets.KM_DEMOS_GHCR_PULL_TOKEN }} --docker-email=km@kurtmadel.com
 
       - id: 'gcp-auth'
         name: 'Authenticate to Google Cloud'
