@@ -10,8 +10,13 @@ spec:
     targetRevision: COMMIT_SHA
     path: helm-chart
     helm:
-      valueFiles:
-      - values-preview.yaml
+      parameters:
+      - name: "image.tag"
+        value: IMAGE_TAG
+      - name: "ingress.hosts[0].host"
+        value: PREVIEW_APP_HOST
+      - name: "ingress.tls[0].hosts[0]"
+        value: PREVIEW_APP_HOST
   destination: 
     server: PREVIEW_VCLUSTER
     namespace: PREVIEW_NAMESPACE
