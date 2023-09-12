@@ -83,7 +83,7 @@ jobs:
         run: |
           loft create vcluster $REPO_NAME-pr-${{ github.event.pull_request.number }} --project preview --recreate
           kubectl create ns preview-$REPO_NAME
-          kubectl apply -n preview-$REPO_NAME -f argocd/ghcr-login-secret.yaml
+          kubectl apply -n preview-$REPO_NAME -f argocd/ghcr-login-secret.yaml --validate=false
 
       - id: 'gcp-auth'
         name: 'Authenticate to Google Cloud'
