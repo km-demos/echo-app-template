@@ -18,8 +18,7 @@ jobs:
     if: ${{ github.event.label.name == 'preview' }}
     runs-on: ubuntu-22.04
     permissions:
-      packages: write
-      contents: write
+      id-token: write
       pull-requests: write
     steps:
       - name: Checkout
