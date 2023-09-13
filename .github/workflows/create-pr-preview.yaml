@@ -44,6 +44,7 @@ jobs:
           loft create vcluster $REPO_NAME-pr-${{ github.event.pull_request.number }} --project preview --recreate
           kubectl create ns preview-$REPO_NAME
           kubectl apply -n preview-$REPO_NAME -f argocd/ghcr-login-secret.yaml --validate=false
+          echo $SHORT_SHA
 
       - id: 'gcp-auth'
         name: 'Authenticate to Google Cloud'
@@ -64,7 +65,7 @@ jobs:
           PREVIEW_APP_HOST=$REPO_NAME-pr-${{ github.event.pull_request.number }}.previews.k8s.kurtmadel.com
           yq e -i ".metadata.name = \"$REPO_NAME-pr-${{ github.event.pull_request.number }}\"" argocd/preview-app.yaml
           yq e -i ".spec.source.repoURL = \"https://github.com/km-demos/$REPO_NAME.git\"" argocd/preview-app.yaml
-          yq e -i ".spec.source.targetRevision = \"${{ github.sha }}\"" argocd/preview-app.yaml
+          yq e -i ".spec.source.targetRevision = \"${{ github.event.pull_request.head.sha }}\"" argocd/preview-app.yaml
           yq e -i ".spec.destination.namespace = \"preview-$REPO_NAME\"" argocd/preview-app.yaml
           yq e -i ".spec.destination.server = \"$VCLUSTER_URL\"" argocd/preview-app.yaml
           sed -i "s|IMAGE_REPO|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}|g" argocd/preview-app.yaml
