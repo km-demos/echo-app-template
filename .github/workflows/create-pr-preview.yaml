@@ -1,0 +1,47 @@
+name: create-pr-preview
+
+# on merge to main from pull request (recommended)
+on:
+  pull_request:
+    types: [labeled]
+    branches:
+      - main
+env:
+  REPO_NAME: ${{ github.event.repository.name }}
+
+jobs:
+  create-preview-env:
+    if: ${{ github.event.label.name == 'preview' }}
+    runs-on: ubuntu-22.04
+    permissions:
+      packages: write
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Add SHORT_SHA env property with commit short sha
+        run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
+      - name: Install Loft CLI
+        uses: loft-sh/setup-loft@v2
+        with:
+          version: v3.2.4
+          url: ${{ secrets.LOFT_URL }}
+          # Specify your Loft access key here
+          access-key: ${{ secrets.LOFT_PREVIEW_ACCESS_KEY }}
+
+      - name: Create Preview vcluster
+        run: |
+          loft create vcluster $REPO_NAME-pr-${{ github.event.pull_request.number }} --project preview --recreate
+          kubectl create ns preview-$REPO_NAME
+          kubectl apply -n preview-$REPO_NAME -f argocd/ghcr-login-secret.yaml --validate=false
+
+      - uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ github.event.pull_request.number }}
+          header: release
+          message: |
+            Preview environment deployed at: https://${{ env.REPO_NAME}}-pr-${{ github.event.pull_request.number }}.previews.k8s.kurtmadel.com
+          

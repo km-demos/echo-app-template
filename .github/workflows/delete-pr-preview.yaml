@@ -3,27 +3,18 @@ name: delete-pr-preview
 # on merge to main from pull request (recommended)
 on:
   pull_request:
-    types: 
-      - closed
+    types: [closed, unlabeled]
     branches:
       - main
 
 env:
-  # Use docker.io for Docker Hub if empty
-  REGISTRY: ghcr.io
-  # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}
-  CLUSTER_NAME: 'k8s-demo-cluster'
-  GCP_REGION: 'us-east5'
-  GCP_ZONE: 'us-east5-b'
-  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT }}
   REPO_NAME: ${{ github.event.repository.name }}
 
 jobs:
   delete-pr-preview:
+    if: ${{ github.event.action == 'closed' }} || ${{ github.event.label.name == 'preview' }}
     runs-on: ubuntu-22.04
     permissions:
-      id-token: write
       packages: write
       contents: write
     steps:
@@ -43,32 +34,4 @@ jobs:
       - name: Delete Preview vcluster
         run: |
           loft delete vcluster $REPO_NAME-pr-${{ github.event.pull_request.number }} --project preview
-
-      - id: 'gcp-auth'
-        name: 'Authenticate to Google Cloud'
-        uses: google-github-actions/auth@v1.1.1
-        with:
-          workload_identity_provider: ${{ secrets.WIF_POOL }}
-          service_account: ${{ secrets.WIF_SA_EMAIL }}
-
-      - id: get-credentials
-        uses: google-github-actions/get-gke-credentials@v1.0.2
-        with:
-          cluster_name: ${{ env.CLUSTER_NAME }}
-          location: ${{ env.GCP_ZONE }}
-
-      - id: delete-argocd-app
-        run: |
-          VCLUSTER_URL=${{ secrets.LOFT_URL }}/kubernetes/project/preview/virtualcluster/$REPO_NAME-pr-${{ github.event.pull_request.number }}
-          PREVIEW_APP_HOST=$REPO_NAME-pr-${{ github.event.pull_request.number }}.previews.k8s.kurtmadel.com
-          yq e -i ".metadata.name = \"$REPO_NAME-pr-${{ github.event.pull_request.number }}\"" argocd/preview-app.yaml
-          yq e -i ".spec.source.repoURL = \"https://github.com/km-demos/$REPO_NAME.git\"" argocd/preview-app.yaml
-          yq e -i ".spec.source.targetRevision = \"${{ github.sha }}\"" argocd/preview-app.yaml
-          yq e -i ".spec.destination.namespace = \"preview-$REPO_NAME\"" argocd/preview-app.yaml
-          yq e -i ".spec.destination.server = \"$VCLUSTER_URL\"" argocd/preview-app.yaml
-          sed -i "s|IMAGE_REPO|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}|g" argocd/preview-app.yaml
-          sed -i "s/IMAGE_TAG/${SHORT_SHA}/g" argocd/preview-app.yaml
-          sed -i "s/PREVIEW_APP_HOST/$PREVIEW_APP_HOST/g" argocd/preview-app.yaml
-          more argocd/preview-app.yaml
-          kubectl delete -f argocd/preview-app.yaml
-          
+     

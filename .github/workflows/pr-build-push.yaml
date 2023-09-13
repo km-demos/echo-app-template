@@ -1,9 +1,9 @@
-name: update-app-version-pr
+name: pr-build-push
 
 # on merge to main from pull request (recommended)
 on:
   pull_request:
-    types: [opened, reopened]
+    types: [opened, reopened, synchronize]
     branches:
       - main
     paths:
@@ -14,11 +14,6 @@ env:
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
-  CLUSTER_NAME: 'k8s-demo-cluster'
-  GCP_REGION: 'us-east5'
-  GCP_ZONE: 'us-east5-b'
-  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT }}
-  REPO_NAME: ${{ github.event.repository.name }}
 
 jobs:
   build-push-app:
@@ -53,25 +48,3 @@ jobs:
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.SHORT_SHA }}
-
-      - name: Install Loft CLI
-        uses: loft-sh/setup-loft@v2
-        with:
-          version: v3.2.4
-          url: ${{ secrets.LOFT_URL }}
-          # Specify your Loft access key here
-          access-key: ${{ secrets.LOFT_PREVIEW_ACCESS_KEY }}
-
-      - name: Create Preview vcluster
-        run: |
-          loft create vcluster $REPO_NAME-pr-${{ github.event.pull_request.number }} --project preview --recreate
-          kubectl create ns preview-$REPO_NAME
-          kubectl apply -n preview-$REPO_NAME -f argocd/ghcr-login-secret.yaml --validate=false
-
-      - uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          number: ${{ github.event.pull_request.number }}
-          header: release
-          message: |
-            Preview environment deployed at: https://${{ env.REPO_NAME}}-pr-${{ github.event.pull_request.number }}.previews.k8s.kurtmadel.com
-          
