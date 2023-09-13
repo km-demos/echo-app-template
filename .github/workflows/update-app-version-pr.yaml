@@ -24,7 +24,6 @@ jobs:
   build-push-app:
     runs-on: ubuntu-22.04
     permissions:
-      id-token: write
       packages: write
       contents: write
       pull-requests: write
@@ -33,20 +32,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ github.head_ref }}
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          labels: |
-            org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.title=${{ github.event.repository.name }}
-            org.opencontainers.image.vendor=kurtmadel.com
-            org.opencontainers.image.source=${{ github.repositoryUrl }}
-            org.opencontainers.image.description=Simple echo app based on the HashiCorp echo-http.
-          tags: |
-            type=sha
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -57,8 +42,6 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
-      - name: Echo Tag
-        run: echo $DOCKER_METADATA_OUTPUT_VERSION
       - name: Add SHORT_SHA env property with commit short sha
         run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
       - name: Build and push
@@ -84,37 +67,6 @@ jobs:
           loft create vcluster $REPO_NAME-pr-${{ github.event.pull_request.number }} --project preview --recreate
           kubectl create ns preview-$REPO_NAME
           kubectl apply -n preview-$REPO_NAME -f argocd/ghcr-login-secret.yaml --validate=false
-
-      - id: 'gcp-auth'
-        name: 'Authenticate to Google Cloud'
-        uses: google-github-actions/auth@v1.1.1
-        with:
-          workload_identity_provider: ${{ secrets.WIF_POOL }}
-          service_account: ${{ secrets.WIF_SA_EMAIL }}
-
-      - id: get-credentials
-        uses: google-github-actions/get-gke-credentials@v1.0.2
-        with:
-          cluster_name: ${{ env.CLUSTER_NAME }}
-          location: ${{ env.GCP_ZONE }}
-
-      - id: create-argocd-app
-        run: |
-          VCLUSTER_URL=${{ secrets.LOFT_URL }}/kubernetes/project/preview/virtualcluster/$REPO_NAME-pr-${{ github.event.pull_request.number }}
-          PREVIEW_APP_HOST=$REPO_NAME-pr-${{ github.event.pull_request.number }}.previews.k8s.kurtmadel.com
-          yq e -i ".metadata.name = \"$REPO_NAME-pr-${{ github.event.pull_request.number }}\"" argocd/preview-app.yaml
-          yq e -i ".spec.source.repoURL = \"https://github.com/km-demos/$REPO_NAME.git\"" argocd/preview-app.yaml
-          yq e -i ".spec.source.targetRevision = \"${{ github.sha }}\"" argocd/preview-app.yaml
-          yq e -i ".spec.destination.namespace = \"preview-$REPO_NAME\"" argocd/preview-app.yaml
-          yq e -i ".spec.destination.server = \"$VCLUSTER_URL\"" argocd/preview-app.yaml
-          sed -i "s|IMAGE_REPO|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}|g" argocd/preview-app.yaml
-          sed -i "s/IMAGE_TAG/${SHORT_SHA}/g" argocd/preview-app.yaml
-          sed -i "s/IMAGE_ARGS_TEXT/$REPO_NAME pr-${{ github.event.pull_request.number }} ${SHORT_SHA}/g" argocd/preview-app.yaml
-          sed -i "s/PREVIEW_APP_HOST/$PREVIEW_APP_HOST/g" argocd/preview-app.yaml
-          sed -i "s|APP_LINK|https://$PREVIEW_APP_HOST|g" argocd/preview-app.yaml
-          sed -i "s|GITHUB_PR_LINK|${{ github.server_url }}/${{ github.repository }}/pull/${{ github.event.pull_request.number }}|g" argocd/preview-app.yaml
-          more argocd/preview-app.yaml
-          kubectl apply -f argocd/preview-app.yaml
 
       - uses: marocchino/sticky-pull-request-comment@v2
         with:
