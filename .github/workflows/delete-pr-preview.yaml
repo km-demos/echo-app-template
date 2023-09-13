@@ -16,7 +16,7 @@ env:
 
 jobs:
   delete-pr-preview:
-    if: ${{ github.event.action == 'closed' }} || ${{ github.event.label.name == 'preview' }}
+    if: (${{ github.event.action == 'closed' }} && contains(github.event.pull_request.labels.*.name, 'preview')) || ${{ github.event.label.name == 'preview' }}
     runs-on: ubuntu-22.04
     permissions:
       id-token: write
