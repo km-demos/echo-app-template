@@ -4,7 +4,7 @@ metadata:
   name: APPLICATION_NAME
   namespace: argo-cd
 spec:
-  project: default
+  project: loft-preview
   source:
     repoURL: 
     targetRevision: COMMIT_SHA

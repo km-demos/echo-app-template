@@ -38,6 +38,24 @@ jobs:
           kubectl create ns preview-$REPO_NAME
           kubectl apply -n preview-$REPO_NAME -f argocd/ghcr-login-secret.yaml --validate=false
 
+      - id: create-argocd-app
+        run: |
+          VCLUSTER_URL=${{ secrets.LOFT_URL }}/kubernetes/project/preview/virtualcluster/$REPO_NAME-pr-${{ github.event.pull_request.number }}
+          PREVIEW_APP_HOST=$REPO_NAME-pr-${{ github.event.pull_request.number }}.previews.k8s.kurtmadel.com
+          yq e -i ".metadata.name = \"$REPO_NAME-pr-${{ github.event.pull_request.number }}\"" argocd/preview-app.yaml
+          yq e -i ".spec.source.repoURL = \"https://github.com/km-demos/$REPO_NAME.git\"" argocd/preview-app.yaml
+          yq e -i ".spec.source.targetRevision = \"${{ github.sha }}\"" argocd/preview-app.yaml
+          yq e -i ".spec.destination.namespace = \"preview-$REPO_NAME\"" argocd/preview-app.yaml
+          yq e -i ".spec.destination.server = \"$VCLUSTER_URL\"" argocd/preview-app.yaml
+          sed -i "s|IMAGE_REPO|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}|g" argocd/preview-app.yaml
+          sed -i "s/IMAGE_TAG/${SHORT_SHA}/g" argocd/preview-app.yaml
+          sed -i "s/IMAGE_ARGS_TEXT/$REPO_NAME pr-${{ github.event.pull_request.number }} ${SHORT_SHA}/g" argocd/preview-app.yaml
+          sed -i "s/PREVIEW_APP_HOST/$PREVIEW_APP_HOST/g" argocd/preview-app.yaml
+          sed -i "s|APP_LINK|https://$PREVIEW_APP_HOST|g" argocd/preview-app.yaml
+          sed -i "s|GITHUB_PR_LINK|${{ github.server_url }}/${{ github.repository }}/pull/${{ github.event.pull_request.number }}|g" argocd/preview-app.yaml
+          more argocd/preview-app.yaml
+          kubectl apply -f argocd/preview-app.yaml
+
       - uses: marocchino/sticky-pull-request-comment@v2
         with:
           number: ${{ github.event.pull_request.number }}
