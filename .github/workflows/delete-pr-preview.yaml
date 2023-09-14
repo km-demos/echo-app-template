@@ -1,6 +1,6 @@
 name: delete-pr-preview
 
-# on merge to main from pull request (recommended)
+# on pr closed with preview label or preview unlabeled
 on:
   pull_request:
     types: [closed, unlabeled]
@@ -17,6 +17,20 @@ jobs:
     permissions:
       id-token: write
     steps:
+      - id: checkout
+        if: github.event.action == 'unlabeled'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - id: delete-argocd-app
+        if: github.event.action == 'unlabeled'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr edit ${{ github.event.pull_request.number }} --remove-label "preview-cluster-ready"
+      
       - id: install-loft-cli
         uses: loft-sh/setup-loft@v2
         with:
@@ -28,9 +42,4 @@ jobs:
       - id: delete-preview-vcluster
         run: |
           loft delete vcluster $REPO_NAME-pr-${{ github.event.pull_request.number }} --project preview
-
-      - id: delete-argocd-app
-        run: |
-          loft use cluster loft-cluster 
-          kubectl delete application $REPO_NAME-pr-${{ github.event.pull_request.number }} -n argocd
      
