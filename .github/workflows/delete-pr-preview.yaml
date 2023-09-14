@@ -9,10 +9,6 @@ on:
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
-  CLUSTER_NAME: 'k8s-demo-cluster'
-  GCP_REGION: 'us-east5'
-  GCP_ZONE: 'us-east5-b'
-  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT }}
 
 jobs:
   delete-pr-preview:
@@ -27,25 +23,14 @@ jobs:
           version: v3.2.4
           url: ${{ secrets.LOFT_URL }}
           # Specify your Loft access key here
-          access-key: ${{ secrets.LOFT_PREVIEW_ACCESS_KEY }}
+          access-key: ${{ secrets.LOFT_GITHUB_ACTIONS_ACCESS_KEY }}
 
       - name: Delete Preview vcluster
         run: |
           loft delete vcluster $REPO_NAME-pr-${{ github.event.pull_request.number }} --project preview
 
-      - id: 'gcp-auth'
-        name: 'Authenticate to Google Cloud'
-        uses: google-github-actions/auth@v1.1.1
-        with:
-          workload_identity_provider: ${{ secrets.WIF_POOL }}
-          service_account: ${{ secrets.WIF_SA_EMAIL }}
-
-      - id: get-credentials
-        uses: google-github-actions/get-gke-credentials@v1.0.2
-        with:
-          cluster_name: ${{ env.CLUSTER_NAME }}
-          location: ${{ env.GCP_ZONE }}
-
       - id: delete-argocd-app
-        run: kubectl delete application $REPO_NAME-pr-${{ github.event.pull_request.number }} -n argocd
+        run: |
+          loft use cluster loft-cluster 
+          kubectl delete application $REPO_NAME-pr-${{ github.event.pull_request.number }} -n argocd
      
