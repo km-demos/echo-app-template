@@ -17,7 +17,7 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - name: Install Loft CLI
+      - id: install-loft-cli
         uses: loft-sh/setup-loft@v2
         with:
           version: v3.2.4
@@ -25,7 +25,7 @@ jobs:
           # Specify your Loft access key here
           access-key: ${{ secrets.LOFT_GITHUB_ACTIONS_ACCESS_KEY }}
 
-      - name: Delete Preview vcluster
+      - id: delete-preview-vcluster
         run: |
           loft delete vcluster $REPO_NAME-pr-${{ github.event.pull_request.number }} --project preview
 
